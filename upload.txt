@@ -1,0 +1,27 @@
+<?php
+require 'includes/db.php';
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+
+    $file = $_FILES['resume'];
+    $allowed = ['pdf', 'doc', 'docx'];
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $size = $file['size'];
+
+    if (!in_array($ext, $allowed) || $size > 2 * 1024 * 1024) {
+        die("Invalid file type or size. Only PDF/DOC under 2MB allowed.");
+    }
+
+    $filename = uniqid() . "." . $ext;
+    $destination = "uploads/" . $filename;
+    move_uploaded_file($file['tmp_name'], $destination);
+
+    $stmt = $conn->prepare("INSERT INTO users (name, email, resume) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $name, $email, $destination);
+    $stmt->execute();
+
+    echo "<p style='text-align:center;'>Application submitted successfully! <a href='index.php'>Back</a></p>";
+}
+?>
